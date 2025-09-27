@@ -30,11 +30,11 @@ This widget is fully branded and can be embedded on any partner website with min
 
 **Widget Preview**  
 
-![Widget Preview](https://e-talk.xyz/wp-content/uploads/2025/09/Webchain200-x-200-px-2.webp)  
+![Widget Preview](https://e-talk.xyz/wp-content/uploads/2025/09/Screen-Shot-2025-09-27-at-5.19.11-AM.webp) 
 
 **Admin Configuration**  
 
-![Admin Panel](https://e-talk.xyz/wp-content/uploads/2025/09/Webchain200-x-200-px-2.webp)  
+![Admin Panel](https://e-talk.xyz/wp-content/uploads/2025/09/Screen-Shot-2025-09-27-at-5.11.41-AM.webp)  
 
 ---
 
