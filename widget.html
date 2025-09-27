@@ -1,860 +1,220 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>ETK Mining Integration</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 <style>
-:root{
-  --primary:#007cba; --success:#28a745; --danger:#dc3545;
-  --warning:#ffc107; --info:#17a2b8; --dark:#343a40; --light:#f8f9fa;
-  --card-shadow: 0 2px 10px rgba(0,0,0,0.08);
-  --radius:10px;
+:root {
+  --primary:#007cba;
+  --success:#28a745;
+  --danger:#dc3545;
+  --warning:#ffc107;
+  --info:#17a2b8;
+  --dark:#343a40;
+  --light:#f8f9fa;
 }
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;background:#f5f6f8;color:#222;line-height:1.5}
-.container{max-width:1200px;margin:28px auto;padding:20px}
-.header{background:#fff;padding:20px;border-radius:var(--radius);box-shadow:var(--card-shadow);text-align:center;margin-bottom:18px}
-.header img{width:84px;height:84px;object-fit:contain}
-.header h1{font-size:22px;margin-top:8px;color:var(--dark)}
-.header p{color:#666;margin-top:6px}
-
-/* tabs */
-.tabs{display:flex;background:#fff;border-radius:10px 10px 0 0;overflow:hidden;box-shadow:var(--card-shadow)}
-.tab{flex:1;padding:12px 18px;background:#f8f9fa;border:none;cursor:pointer;font-weight:600;text-align:center}
-.tab.active{background:var(--primary);color:#fff}
-.tab:focus{outline:none}
-
-/* content cards */
-.tab-content{display:none;background:#fff;padding:22px;border-radius:0 0 var(--radius) var(--radius);box-shadow:var(--card-shadow)}
-.tab-content.active{display:block}
-.form-group{margin-bottom:14px}
-.form-label{display:block;margin-bottom:6px;font-weight:600;color:var(--dark)}
-.form-input{width:100%;padding:10px;border:2px solid #eef0f2;border-radius:6px;font-size:14px}
-.form-input:focus{outline:none;border-color:var(--primary)}
-.btn{display:inline-block;padding:10px 16px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
-.btn-primary{background:var(--primary);color:#fff}
-.btn-info{background:var(--info);color:#fff}
-.btn-danger{background:var(--danger);color:#fff}
-.btn-success{background:var(--success);color:#fff}
-.btn-ghost{background:transparent;border:1px solid #e6e6e6;color:#333}
-
-/* alerts */
-.alert{padding:12px;border-radius:8px;margin:12px 0}
-.alert-info{background:#e9f7fb;color:#055}
-.alert-success{background:#eaf7ee;color:#114}
-.alert-warning{background:#fff6e6;color:#6b4d00}
-.alert-error{background:#fdecea;color:#611}
-
-/* widget */
-.mining-widget{background:#fff;padding:18px;border-radius:10px;box-shadow:var(--card-shadow);text-align:center}
-.mining-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:12px}
-.stat-card{background:var(--light);padding:10px;border-radius:6px;text-align:center}
-.stat-label{font-size:13px;color:#666}
-.stat-value{font-weight:700;color:var(--primary);font-size:18px}
-
-/* small helpers */
-.hidden{display:none}
-.text-center{text-align:center}
-.small{font-size:13px;color:#666}
-.code{font-family:monospace;background:#f4f6f8;padding:8px;border-radius:6px;display:block;white-space:pre;overflow:auto}
-.icon{vertical-align:middle;margin-right:6px}
-.copy-btn{margin-top:8px}
-
-/* admin login */
-.admin-login{background:#fff;padding:20px;border-radius:var(--radius);box-shadow:var(--card-shadow);max-width:400px;margin:0 auto}
-.admin-login h2{margin-bottom:15px;text-align:center}
-
-/* visitor interface */
-.visitor-interface{background:#fff;padding:20px;border-radius:var(--radius);box-shadow:var(--card-shadow);max-width:500px;margin:0 auto}
-.visitor-interface h2{text-align:center;margin-bottom:15px}
-
-/* responsive */
-@media (max-width:720px){.tabs{flex-direction:column}.tab{padding:10px}}
+* {box-sizing:border-box;margin:0;padding:0;}
+body {font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;line-height:1.6;color:#333;background:#f5f5f5;}
+.container {max-width:1200px;margin:0 auto;padding:20px;}
+.header {background:white;padding:20px;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.1);margin-bottom:20px;text-align:center;display:flex;align-items:center;justify-content:center;gap:15px;}
+.header-logo {width:80px;height:80px;object-fit:contain;}
+.tabs {display:flex;background:white;border-radius:10px 10px 0 0;overflow:hidden;}
+.tab {padding:15px 30px;background:#f8f9fa;border:none;cursor:pointer;flex:1;text-align:center;font-weight:600;transition:all 0.3s;}
+.tab.active {background:var(--primary);color:white;}
+.tab-content {display:none;background:white;padding:30px;border-radius:0 0 10px 10px;box-shadow:0 2px 10px rgba(0,0,0,0.1);}
+.tab-content.active {display:block;}
+.form-group {margin-bottom:20px;}
+.form-label {display:block;margin-bottom:5px;font-weight:600;color:var(--dark);}
+.form-input {width:100%;padding:12px;border:2px solid #e9ecef;border-radius:5px;font-size:14px;transition:border-color 0.3s;}
+.form-input:focus {outline:none;border-color:var(--primary);}
+.btn {padding:12px 24px;border:none;border-radius:5px;cursor:pointer;font-size:14px;font-weight:600;transition:all 0.3s;}
+.btn-primary {background:var(--primary);color:white;}
+.btn-success {background:var(--success);color:white;}
+.btn-danger {background:var(--danger);color:white;}
+.btn-warning {background:var(--warning);color:black;}
+.btn-info {background:var(--info);color:white;}
+.btn:hover {transform:translateY(-1px);box-shadow:0 2px 5px rgba(0,0,0,0.2);}
+.alert {padding:15px;border-radius:5px;margin:15px 0;}
+.alert-success {background:#d4edda;color:#155724;border-left:4px solid var(--success);}
+.alert-error {background:#f8d7da;color:#721c24;border-left:4px solid var(--danger);}
+.alert-warning {background:#fff3cd;color:#856404;border-left:4px solid var(--warning);}
+.alert-info {background:#d1ecf1;color:#0c5460;border-left:4px solid var(--info);}
+.mining-widget {background:white;border-radius:10px;padding:25px;box-shadow:0 2px 10px rgba(0,0,0,0.1);text-align:center;}
+.mining-stats {display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:15px;margin:20px 0;}
+.stat-card {background:var(--light);padding:15px;border-radius:5px;text-align:center;}
+.stat-value {font-size:24px;font-weight:bold;color:var(--primary);}
+.hidden {display:none;}
+.text-center {text-align:center;}
+.mb-3 {margin-bottom:15px;}
+.mt-3 {margin-top:15px;}
 </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <img src="https://e-talk.xyz/wp-content/uploads/2025/09/Webchain200-x-200-px-2.webp" alt="ETK Logo" />
+<div class="container">
+  <div class="header">
+    <img src="https://e-talk.xyz/wp-content/uploads/2025/09/Webchain200-x-200-px-2.webp" alt="ETK Logo" class="header-logo">
+    <div>
       <h1>ETK Mining Integration</h1>
-      <p class="small">Configure the site to allow e-talk users to mine ETK from this domain</p>
+      <p>Cryptocurrency mining integration for your website</p>
     </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('admin')"><i class="fa-solid fa-gear"></i> Admin Configuration</button>
+    <button class="tab" onclick="switchTab('widget')"><i class="fa-solid fa-rocket"></i> Mining Widget</button>
+    <button class="tab" onclick="switchTab('embed')"><i class="fa-solid fa-code"></i> Embed Code</button>
+  </div>
 
-    <!-- Visitor Interface (shown by default) -->
-    <div id="visitor-interface" class="visitor-interface">
-      <h2>Start Mining ETK</h2>
-      <p class="small" style="text-align:center">No login required - just enter your e-talk user ID</p>
-      
-      <div class="mining-widget" style="margin-top:15px">
-        <div class="form-group">
-          <label class="form-label">Your e-talk User ID</label>
-          <input id="visitor-user-id" class="form-input" type="text" placeholder="Enter your e-talk user ID" />
-          <div class="small">You don't need to login - just enter your e-talk user ID</div>
-        </div>
-
-        <button class="btn btn-primary" style="width:100%;margin-top:10px" onclick="startVisitorMining()">Start Mining</button>
-        
-        <div class="mining-stats" style="margin-top:12px">
-          <div class="stat-card">
-            <div class="stat-label">Status</div>
-            <div id="visitor-mining-status" class="stat-value">Ready</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Last Reward</div>
-            <div id="visitor-last-reward" class="stat-value">-</div>
-          </div>
-        </div>
-        
-        <div id="visitor-result" style="margin-top:12px"></div>
-      </div>
-      
-      <!-- Admin access link for site owners -->
-      <div style="text-align:center;margin-top:15px">
-        <button class="btn btn-ghost" onclick="showAdminLogin()">Site Admin Settings</button>
-      </div>
+  <div id="admin" class="tab-content active">
+    <h2>Admin Configuration</h2>
+    <p>Configure your ETK mining integration securely</p>
+    <div class="alert alert-info">
+      <strong>Domain Verification:</strong> This configuration is tied to <strong id="current-domain">loading...</strong>
     </div>
-
-    <!-- Admin Login (hidden from visitors by default) -->
-    <div id="admin-login" class="admin-login hidden">
-      <h2>Admin Access</h2>
-      <p class="small" style="text-align:center;margin-bottom:15px">Enter admin password to access settings</p>
+    <form id="admin-config-form">
+      <div class="form-group">
+        <label class="form-label">Admin Email</label>
+        <input type="email" id="admin-email" class="form-input" required placeholder="your-email@domain.com">
+      </div>
       <div class="form-group">
         <label class="form-label">Admin Password</label>
-        <input id="login-password" class="form-input" type="password" placeholder="Enter admin password" />
+        <input type="password" id="admin-password" class="form-input" required placeholder="Enter your admin password">
+        <small>Required for security when updating credentials</small>
       </div>
-      <button class="btn btn-primary" style="width:100%" onclick="attemptAdminLogin()">Access Admin Settings</button>
-      <div style="text-align:center;margin-top:10px">
-        <button class="btn btn-ghost" onclick="showVisitorInterface()">Back to Mining</button>
+      <div class="form-group">
+        <label class="form-label">API Key (from e-talk.xyz)</label>
+        <input type="text" id="api-key" class="form-input" placeholder="etk_xxxxxxxxxxxxxxxx">
       </div>
-      <div id="login-error" class="alert alert-error hidden" style="margin-top:10px"></div>
-    </div>
-
-    <!-- Admin Interface (hidden from visitors) -->
-    <div id="admin-interface" class="hidden">
-      <div class="tabs" role="tablist" aria-label="ETK tabs">
-        <button class="tab active" onclick="switchTab('admin')">Admin Configuration</button>
-        <button class="tab" onclick="switchTab('widget')">Mining Widget</button>
-        <button class="tab" onclick="switchTab('embed')">Embed Code</button>
-        <button class="tab" onclick="logoutAdmin()" style="flex:0.5;background:var(--danger);color:white">Logout</button>
+      <div class="form-group">
+        <label class="form-label">Secret Key (from e-talk.xyz)</label>
+        <input type="password" id="api-secret" class="form-input" placeholder="sec_xxxxxxxxxxxxxxxx">
       </div>
-
-      <!-- ADMIN -->
-      <div id="admin" class="tab-content active" role="tabpanel">
-        <h2 style="margin-bottom:10px">Admin Configuration</h2>
-        <div class="alert alert-info">
-          <strong>Domain:</strong> <span id="current-domain">loading...</span>
-        </div>
-
-        <form id="admin-config-form">
-          <div class="form-group">
-            <label class="form-label">Admin Email</label>
-            <input id="admin-email" class="form-input" type="email" placeholder="admin@yourdomain.com" required />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Admin Password (for unlocking settings)</label>
-            <input id="admin-password" class="form-input" type="password" placeholder="enter admin password" required />
-            <div class="small">Password is used only to lock/unlock the admin UI on this browser for this domain.</div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">API Key (from e-talk.xyz)</label>
-            <input id="api-key" class="form-input" type="text" placeholder="etk_xxxxxxxxxxxxxxxx" />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Secret Key (from e-talk.xyz)</label>
-            <input id="api-secret" class="form-input" type="password" placeholder="sec_xxxxxxxxxxxxxxxx" />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Site ID (from e-talk.xyz)</label>
-            <input id="site-id" class="form-input" type="text" placeholder="your-site_abc123" />
-          </div>
-
-          <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
-            <button type="submit" class="btn btn-primary">Save Configuration</button>
-            <button type="button" onclick="testConnection()" class="btn btn-info">Test Connection</button>
-            <button type="button" onclick="resetConfiguration()" class="btn btn-danger">Reset</button>
-          </div>
-        </form>
-
-        <div id="config-status" style="margin-top:12px"></div>
-
-        <div id="saved-config" class="hidden" style="margin-top:14px">
-          <h3>Current Configuration</h3>
-          <div style="margin-top:10px" class="mining-stats">
-            <div class="stat-card">
-              <div class="stat-label">Domain</div>
-              <div class="stat-value" id="config-domain">-</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Status</div>
-              <div class="stat-value" id="config-status-badge">-</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Last Test</div>
-              <div class="stat-value" id="config-last-test">-</div>
-            </div>
-          </div>
-        </div>
+      <div class="form-group">
+        <label class="form-label">Site ID (from e-talk.xyz)</label>
+        <input type="text" id="site-id" class="form-input" placeholder="your-site_abc123">
       </div>
-
-      <!-- WIDGET -->
-      <div id="widget" class="tab-content" role="tabpanel">
-        <h2>Mining Widget Preview</h2>
-        <p class="small">How the widget will appear to e-talk users on this site</p>
-
-        <div class="mining-widget" style="margin-top:12px">
-          <img src="https://e-talk.xyz/wp-content/uploads/2025/09/Webchain200-x-200-px-2.webp" alt="ETK Logo" style="width:64px" />
-          <h3 style="margin-top:8px;color:var(--primary)">ETK Mining</h3>
-          <div id="widget-message" class="alert alert-info" style="margin-top:10px">Widget configuration required. Open Admin tab to save API settings.</div>
-
-          <div id="mining-interface" class="hidden" style="margin-top:12px">
-            <div class="form-group">
-              <label class="form-label">e-talk.xyz User ID</label>
-              <input id="user-id" class="form-input" type="text" placeholder="Enter your e-talk user ID" />
-            </div>
-
-            <div style="display:flex;gap:8px;justify-content:center;margin-top:8px">
-              <button id="mine-btn" class="btn btn-primary" onclick="startUserMining()">Start Mining</button>
-              <button class="btn btn-ghost" onclick="pauseMining()">Pause</button>
-            </div>
-
-            <div class="mining-stats" style="margin-top:12px">
-              <div class="stat-card">
-                <div class="stat-label">Mining Power</div>
-                <div id="mining-power" class="stat-value">-</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-label">Last Reward</div>
-                <div id="last-reward" class="stat-value">-</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-label">Status</div>
-                <div id="mining-status" class="stat-value">Idle</div>
-              </div>
-            </div>
-
-            <div id="widget-result" style="margin-top:12px"></div>
-          </div>
-        </div>
+      <div class="form-group">
+        <label class="form-label">Configuration Password</label>
+        <input type="password" id="config-password" class="form-input" required placeholder="Create a password to protect this configuration">
+        <small>This password will be required to modify settings</small>
       </div>
-
-      <!-- EMBED -->
-      <div id="embed" class="tab-content" role="tabpanel">
-        <h2>Embed Code</h2>
-        <p class="small">Paste on any partner website to render the ETK mining widget (uses site's local config).</p>
-
-        <div style="margin-top:12px">
-          <label class="form-label">Embed Snippet</label>
-          <div class="code" id="embed-code" style="height:220px;overflow:auto"></div>
-          <div style="text-align:center;margin-top:10px">
-            <button class="btn btn-success copy-btn" onclick="copyEmbedCode()">Copy to Clipboard</button>
-          </div>
-        </div>
+      <div class="text-center">
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save Configuration</button>
+        <button type="button" onclick="testConnection()" class="btn btn-info"><i class="fa-solid fa-link"></i> Test Connection</button>
+        <button type="button" onclick="testDirect()" class="btn btn-warning"><i class="fa-solid fa-globe"></i> Test Direct</button>
+        <button type="button" onclick="resetConfiguration()" class="btn btn-danger"><i class="fa-solid fa-rotate-right"></i> Reset</button>
+      </div>
+    </form>
+    <div id="config-status" class="mt-3"></div>
+    <div id="saved-config" class="hidden">
+      <h3>Current Configuration</h3>
+      <div class="mining-stats">
+        <div class="stat-card"><div class="stat-label">Domain</div><div class="stat-value" id="config-domain">-</div></div>
+        <div class="stat-card"><div class="stat-label">Status</div><div class="stat-value" id="config-status-badge">-</div></div>
+        <div class="stat-card"><div class="stat-label">Last Test</div><div class="stat-value" id="config-last-test">-</div></div>
       </div>
     </div>
   </div>
 
-<script>
-/* ------------------ Production-minded Professional ETK Miner (client) ------------------ */
-class ProfessionalETKMiner {
-  constructor(){
-    this.baseURL = 'https://e-talk.xyz/wp-json/etk/v1';
-    this.config = { apiKey:'', secret:'', siteId:'', domain:'', lastTest:null, configHash:'' };
-    this.isConfigured = false;
-    this.currentDomain = window.location.hostname;
-    this.isAdmin = false;
-  }
+  <div id="widget" class="tab-content">
+    <h2>Mining Widget Preview</h2>
+    <p>This is how the mining widget will appear to your users</p>
+    <div class="mining-widget">
+      <h3><i class="fa-solid fa-coins"></i> Mine ETK While Browsing</h3>
+      <p>Earn ETK cryptocurrency by interacting with this site</p>
+      <div id="widget-content">
+        <div class="alert alert-info" id="widget-message">
+          <i class="fa-solid fa-gear"></i> Widget configuration needed. Please set up credentials in Admin tab.
+        </div>
+        <div id="mining-interface" class="hidden">
+          <div class="form-group">
+            <label class="form-label">Your e-talk.xyz User ID</label>
+            <input type="text" id="user-id" class="form-input" placeholder="Enter your User ID">
+          </div>
+          <button onclick="startUserMining()" class="btn btn-primary" id="mine-btn"><i class="fa-solid fa-hammer"></i> Start Mining ETK</button>
+          <div class="mining-stats">
+            <div class="stat-card"><div class="stat-label">Mining Power</div><div class="stat-value" id="mining-power">-</div></div>
+            <div class="stat-card"><div class="stat-label">Last Reward</div><div class="stat-value" id="last-reward">-</div></div>
+            <div class="stat-card"><div class="stat-label">Status</div><div class="stat-value" id="mining-status">Ready</div></div>
+          </div>
+        </div>
+      </div>
+      <div id="widget-result" class="mt-3"></div>
+    </div>
+  </div>
 
-  generateConfigHash(domain,password){
-    return btoa(domain + '|' + password).slice(0,48);
-  }
-
-  verifyAccess(password){
-    const storedHash = localStorage.getItem('etk_config_hash');
-    if(!storedHash) return true;
-    const expected = this.generateConfigHash(this.currentDomain,password);
-    return storedHash === expected;
-  }
-
-  checkAdminStatus(password = null){
-    if(this.isAdmin) return true;
-    
-    if(!this.hasExistingConfig()) return false;
-    
-    if(password && this.verifyAccess(password)) {
-      this.isAdmin = true;
-      return true;
-    }
-    
-    const unlocked = localStorage.getItem('etk_config_unlocked') === 'true';
-    if(unlocked) {
-      this.isAdmin = true;
-      return true;
-    }
-    
-    return false;
-  }
-
-  saveConfig(credentials, adminEmail, password){
-    const storedHash = localStorage.getItem('etk_config_hash');
-    if(storedHash && !this.verifyAccess(password)) throw new Error('Invalid admin password');
-
-    this.config = { ...credentials, domain:this.currentDomain, lastTest: new Date().toISOString(),
-                    configHash: this.generateConfigHash(this.currentDomain,password) };
-
-    const encrypted = btoa(JSON.stringify(this.config));
-    localStorage.setItem('etk_miner_config', encrypted);
-    localStorage.setItem('etk_config_hash', this.config.configHash);
-    localStorage.setItem('etk_admin_email', adminEmail);
-    localStorage.setItem('etk_config_unlocked', 'true');
-
-    this.isConfigured = true;
-    this.isAdmin = true;
-    return true;
-  }
-
-  loadConfig(password = null){
-    try {
-      const enc = localStorage.getItem('etk_miner_config');
-      if(!enc) return false;
-      this.config = JSON.parse(atob(enc));
-      if(this.config.domain !== this.currentDomain) throw new Error('Configuration domain mismatch');
-
-      const unlocked = localStorage.getItem('etk_config_unlocked') === 'true';
-      if(!unlocked){
-        if(!password) return false;
-        if(!this.verifyAccess(password)) throw new Error('Invalid password');
-        localStorage.setItem('etk_config_unlocked','true');
-      }
-      this.isConfigured = true;
-      this.isAdmin = true;
-      return true;
-    } catch(err){
-      console.error('loadConfig',err);
-      return false;
-    }
-  }
-
-  hasExistingConfig(){
-    return localStorage.getItem('etk_miner_config') !== null;
-  }
-
-  clearConfig(){
-    localStorage.removeItem('etk_miner_config');
-    localStorage.removeItem('etk_config_hash');
-    localStorage.removeItem('etk_admin_email');
-    localStorage.removeItem('etk_config_unlocked');
-    this.isConfigured = false;
-    this.isAdmin = false;
-    this.config = { apiKey:'', secret:'', siteId:'', domain:'', lastTest:null, configHash:'' };
-  }
-
-  getStatus(){
-    return {
-      isConfigured: this.isConfigured,
-      domain: this.config.domain || this.currentDomain,
-      lastTest: this.config.lastTest,
-      apiKey: this.config.apiKey ? '••••' + this.config.apiKey.slice(-8) : 'Not set'
-    };
-  }
-
-  // Mining function
-  async mine(userId){
-    if(!this.isConfigured) throw new Error('Miner not configured');
-    if(!userId) throw new Error('User ID required');
-
-    // Try direct connection first
-    try {
-      const response = await fetch(this.baseURL + '/remote-mine', {
-        method:'POST',
-        headers:{
-          'Content-Type':'application/json',
-          'X-ETK-API-Key': this.config.apiKey,
-          'X-ETK-Secret': this.config.secret,
-          'X-ETK-Domain': this.currentDomain
-        },
-        body: JSON.stringify({ user_id: userId, partner_site_id: this.config.siteId })
-      });
-
-      const text = await response.text();
-      
-      if(text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html') || text.includes('</html>')) {
-        throw new Error('Server returned HTML error page');
-      }
-      
-      let data;
-      try { 
-        data = JSON.parse(text); 
-      } catch(e){ 
-        throw new Error('Invalid JSON response: ' + text.slice(0,120)); 
-      }
-      
-      if(!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${data.message || 'Unknown error'}`);
-      }
-      
-      return { success:true, data, method:'direct' };
-    } catch(err){
-      // Try proxies if direct fails
-      const proxies = ['https://api.allorigins.win/raw?url=','https://corsproxy.io/?','https://proxy.cors.sh/'];
-      for(let i=0;i<proxies.length;i++){
-        try {
-          const r = await this.mineWithProxy(userId, proxies[i]);
-          return {...r, method: `proxy-${i+1}`};
-        } catch(e){
-          console.warn('proxy mine failed',proxies[i],e.message);
-          if(i === proxies.length-1) throw new Error('All mining methods failed. Last error: ' + err.message);
-          continue;
-        }
-      }
-      throw err;
-    }
-  }
-
-  async mineWithProxy(userId, proxyUrl){
-    const target = encodeURIComponent(this.baseURL + '/remote-mine');
-    const body = JSON.stringify({ user_id:userId, partner_site_id:this.config.siteId });
-    let fullUrl = proxyUrl.includes('corsproxy.io') ? proxyUrl + this.baseURL + '/remote-mine' : proxyUrl + target;
-    
-    const response = await fetch(fullUrl, {
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'X-ETK-API-Key': this.config.apiKey,
-        'X-ETK-Secret': this.config.secret,
-        'X-ETK-Domain': this.currentDomain
-      },
-      body
-    });
-    
-    const text = await response.text();
-    
-    // Check if response is HTML
-    if(text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html') || text.includes('</html>')) {
-      throw new Error('Proxy returned HTML error page');
-    }
-    
-    try { 
-      const data = JSON.parse(text); 
-      if(!response.ok) throw new Error(`HTTP ${response.status}: ${data.message||'Unknown'}`); 
-      return { success:true, data }; 
-    } catch(e){
-      throw new Error('Invalid JSON from proxy: ' + text.slice(0,120));
-    }
-  }
-}
-
-/* ------------------- UI & integration ------------------- */
-const etkMiner = new ProfessionalETKMiner();
-const domainEl = document.getElementById('current-domain');
-domainEl.textContent = etkMiner.currentDomain;
-
-// helpers
-function showAlert(message,type='info'){
-  const container = document.getElementById('config-status');
-  const cls = type === 'info' ? 'alert-info' : (type==='success'?'alert-success':(type==='warning'?'alert-warning':'alert-error'));
-  container.innerHTML = `<div class="alert ${cls}">${message}</div>`;
-  setTimeout(()=>{ if(container) container.innerHTML=''; },6000);
-}
-
-function switchTab(tabName){
-  document.querySelectorAll('.tab-content').forEach(tc=>tc.classList.remove('active'));
-  document.getElementById(tabName).classList.add('active');
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).classList.add('active');
-  if(tabName === 'embed') generateEmbedCode();
-  if(tabName === 'widget') updateWidgetPreview();
-}
-
-// Show/hide interfaces
-function showAdminLogin() {
-  document.getElementById('visitor-interface').classList.add('hidden');
-  document.getElementById('admin-login').classList.remove('hidden');
-}
-
-function showVisitorInterface() {
-  document.getElementById('admin-login').classlist.add('hidden');
-  document.getElementById('admin-interface').classList.add('hidden');
-  document.getElementById('visitor-interface').classList.remove('hidden');
-}
-
-// Show result for visitor mining
-function showVisitorResult(message, type='info') {
-  const container = document.getElementById('visitor-result');
-  const cls = type === 'info' ? 'alert-info' : (type==='success'?'alert-success':(type==='warning'?'alert-warning':'alert-error'));
-  container.innerHTML = `<div class="alert ${cls}">${message}</div>`;
-  setTimeout(() => container.innerHTML = '', 7000);
-}
-
-// mining function for visitors
-async function startVisitorMining() {
-  const userId = document.getElementById('visitor-user-id').value.trim();
-  if(!userId) {
-    showVisitorResult('Please enter your e-talk user ID', 'error');
-    return;
-  }
-
-  try {
-    // Check if site is configured
-    const configExists = localStorage.getItem('etk_miner_config') !== null;
-    if(!configExists) {
-      showVisitorResult('This site is not configured for mining. Please contact the site administrator.', 'error');
-      return;
-    }
-
-    //UI
-    document.getElementById('visitor-mining-status').textContent = 'Mining...';
-    document.getElementById('visitor-mining-status').style.color = 'var(--success)';
-    
-    const configEncoded = localStorage.getItem('etk_miner_config');
-    const config = JSON.parse(atob(configEncoded));
-    
-    // Set the config in the miner instance
-    etkMiner.config = config;
-    etkMiner.isConfigured = true;
-    
-    // Call the mining function
-    const result = await etkMiner.mine(userId);
-    
-    if(result && result.success){
-      showVisitorResult('Mining started successfully!', 'success');
-      document.getElementById('visitor-last-reward').textContent = 
-        result.data && result.data.reward ? result.data.reward + ' ETK' : 'Pending...';
-    } else {
-      showVisitorResult('Mining request submitted', 'info');
-    }
-    
-  } catch(err) {
-    console.error('Mining error:', err);
-    showVisitorResult('Mining error: ' + err.message, 'error');
-  } finally {
-    document.getElementById('visitor-mining-status').textContent = 'Ready';
-    document.getElementById('visitor-mining-status').style.color = '';
-  }
-}
-
-// Admin authentication functions
-function attemptAdminLogin(){
-  const password = document.getElementById('login-password').value.trim();
-  const errorDiv = document.getElementById('login-error');
-  
-  if(!password) {
-    errorDiv.textContent = 'Please enter admin password';
-    errorDiv.classList.remove('hidden');
-    return;
-  }
-  
-  if(etkMiner.checkAdminStatus(password)) {
-    document.getElementById('admin-login').classList.add('hidden');
-    document.getElementById('admin-interface').classList.remove('hidden');
-    
-    if(etkMiner.hasExistingConfig()) {
-      try {
-        etkMiner.loadConfig(password);
-        updateConfigStatus();
-        
-        const adminEmail = localStorage.getItem('etk_admin_email');
-        if(adminEmail) document.getElementById('admin-email').value = adminEmail;
-      } catch(e) {
-        console.warn('Failed to load config:', e.message);
-      }
-    }
-  } else {
-    errorDiv.textContent = 'Invalid admin password';
-    errorDiv.classList.remove('hidden');
-  }
-}
-
-function logoutAdmin(){
-  etkMiner.isAdmin = false;
-  localStorage.setItem('etk_config_unlocked', 'false');
-  document.getElementById('admin-login').classList.add('hidden');
-  document.getElementById('admin-interface').classList.add('hidden');
-  document.getElementById('visitor-interface').classList.remove('hidden');
-  document.getElementById('login-password').value = '';
-  document.getElementById('login-error').classList.add('hidden');
-}
-
-// Check if user is already authenticated as admin on page load
-window.addEventListener('DOMContentLoaded', ()=> {
-  if(etkMiner.checkAdminStatus()) {
-    document.getElementById('visitor-interface').classList.add('hidden');
-    document.getElementById('admin-interface').classList.remove('hidden');
-    
-    if(etkMiner.hasExistingConfig()) {
-      try {
-        etkMiner.loadConfig(null);
-        updateConfigStatus();
-        
-        const adminEmail = localStorage.getItem('etk_admin_email');
-        if(adminEmail) document.getElementById('admin-email').value = adminEmail;
-      } catch(e) {
-        console.warn('Failed to load config:', e.message);
-      }
-    }
-  } else {
-    document.getElementById('visitor-interface').classList.remove('hidden');
-    document.getElementById('admin-login').classList.add('hidden');
-    document.getElementById('admin-interface').classList.add('hidden');
-  }
-  
-  generateEmbedCode();
-});
-
-/* Save config form */
-document.getElementById('admin-config-form').addEventListener('submit', function(e){
-  e.preventDefault();
-  const email = document.getElementById('admin-email').value.trim();
-  const password = document.getElementById('admin-password').value.trim();
-  const apiKey = document.getElementById('api-key').value.trim();
-  const secret = document.getElementById('api-secret').value.trim();
-  const siteId = document.getElementById('site-id').value.trim();
-  if(!email || !password){ showAlert('Please fill required fields','error'); return; }
-
-  const creds = { apiKey, secret, siteId };
-  try {
-    etkMiner.saveConfig(creds, email, password);
-    showAlert('Configuration saved. Admin unlocked for this site.','success');
-    updateConfigStatus();
-    generateEmbedCode();
-    updateWidgetPreview();
-  } catch(err){ showAlert('Save failed: ' + err.message,'error'); }
-});
-
-/* status update */
-function updateConfigStatus(){
-  const savedDiv = document.getElementById('saved-config');
-  if(etkMiner.isConfigured){
-    const st = etkMiner.getStatus();
-    document.getElementById('config-domain').textContent = st.domain;
-    document.getElementById('config-status-badge').textContent = 'Configured';
-    document.getElementById('config-last-test').textContent = st.lastTest ? new Date(st.lastTest).toLocaleString() : 'Never tested';
-    savedDiv.classList.remove('hidden');
-  } else if(etkMiner.hasExistingConfig()){
-    savedDiv.classList.remove('hidden');
-    document.getElementById('config-domain').textContent = 'Configuration locked';
-    document.getElementById('config-status-badge').textContent = 'Password required';
-    document.getElementById('config-last-test').textContent = 'Enter password to unlock';
-  } else {
-    savedDiv.classList.add('hidden');
-  }
-}
-
-/* reset */
-function resetConfiguration(){
-  if(!confirm('Reset all saved configuration for this site?')) return;
-  etkMiner.clearConfig();
-  document.getElementById('admin-config-form').reset();
-  updateConfigStatus();
-  generateEmbedCode();
-  updateWidgetPreview();
-  showAlert('Configuration cleared for this browser and domain.','warning');
-}
-
-/* Test connection */
-async function testConnection(){
-  try {
-    const unlocked = localStorage.getItem('etk_config_unlocked') === 'true';
-    let loaded = false;
-    if(unlocked) loaded = etkMiner.loadConfig(null);
-    if(!loaded){
-      const pw = document.getElementById('admin-password').value;
-      if(!pw){ showAlert('Enter admin password to test connection','error'); return; }
-      loaded = etkMiner.loadConfig(pw);
-      if(!loaded) { showAlert('Invalid password or configuration','error'); return; }
-    }
-    showAlert('Testing connection...','info');
-    
-    // Simple test request
-    const response = await fetch('https://e-talk.xyz/wp-json/etk/v1/test');
-    const text = await response.text();
-    
-    if(text.includes('<!DOCTYPE') || text.includes('<html')) {
-      throw new Error('Server returned HTML instead of JSON');
-    }
-    
-    showAlert('Connection successful','success');
-  } catch(err){ showAlert('Connection failed: ' + err.message,'error'); }
-}
-
-/* Widget UI */
-function updateWidgetPreview(){
-  const unlocked = localStorage.getItem('etk_config_unlocked') === 'true';
-  const widgetMessage = document.getElementById('widget-message');
-  const miningInterface = document.getElementById('mining-interface');
-  if(unlocked && etkMiner.hasExistingConfig()){
-    const loaded = etkMiner.loadConfig(null);
-    widgetMessage.classList.add('hidden');
-    miningInterface.classList.remove('hidden');
-    document.getElementById('mining-status').textContent = 'Idle';
-    document.getElementById('mining-power').textContent = '-';
-    document.getElementById('last-reward').textContent = '-';
-  } else {
-    widgetMessage.classList.remove('hidden');
-    miningInterface.classList.add('hidden');
-  }
-}
-
-let miningInterval = null;
-let miningActive = false;
-
-/* Start mining for admin */
-async function startUserMining(){
-  const userId = document.getElementById('user-id').value.trim();
-  if(!userId){ alert('Enter your e-talk user id'); return; }
-  try {
-    const unlocked = localStorage.getItem('etk_config_unlocked') === 'true';
-    if(!unlocked) {
-      const pw = prompt('Enter admin password to start mining on this site');
-      if(!pw) return;
-      if(!etkMiner.loadConfig(pw)) { alert('Invalid admin password'); return; }
-    } else {
-      etkMiner.loadConfig(null);
-    }
-
-    document.getElementById('mine-btn').disabled = true;
-    document.getElementById('mining-status').textContent = 'Mining...';
-    miningActive = true;
-
-    const res = await etkMiner.mine(userId);
-    if(res && res.success){
-      const msg = res.data && res.data.message ? res.data.message : 'Mining started';
-      showWidgetResult(msg,'success');
-      document.getElementById('last-reward').textContent = res.data && res.data.reward ? (res.data.reward + ' ETK') : '-';
-    } else {
-      showWidgetResult('Mining request accepted','info');
-    }
-
-    if(miningInterval) clearInterval(miningInterval);
-    miningInterval = setInterval(async ()=>{
-      if(!miningActive) return;
-      document.getElementById('mining-power').textContent = 'active';
-    }, 5000);
-
-  } catch(err){
-    showWidgetResult('Mining failed: ' + err.message,'error');
-    console.error(err);
-  } finally {
-    document.getElementById('mine-btn').disabled = false;
-  }
-}
-
-function pauseMining(){
-  miningActive = false;
-  if(miningInterval) clearInterval(miningInterval);
-  document.getElementById('mining-status').textContent = 'Paused';
-  showWidgetResult('Mining paused','info');
-}
-
-function showWidgetResult(message,type='info'){
-  const container = document.getElementById('widget-result');
-  const cls = type === 'info' ? 'alert-info' : (type==='success'?'alert-success':(type==='warning'?'alert-warning':'alert-error'));
-  container.innerHTML = `<div class="alert ${cls}">${message}</div>`;
-  setTimeout(()=> container.innerHTML = '',7000);
-}
-
-/*Embed generation */
-function generateEmbedCode(){
-  const configPresent = localStorage.getItem('etk_miner_config') !== null;
-  const hostname = etkMiner.currentDomain;
-  const snippet = `<!-- ETK Mining Widget (no login required) - ${hostname} -->
-<div id="etk-mining-widget" style="max-width:320px;padding:16px;border-radius:8px;background:#f8f9fa;border:1px solid #eee;text-align:center">
-  <img src="https://e-talk.xyz/wp-content/uploads/2025/09/Webchain200-x-200-px-2.webp" alt="ETK" style="width:64px;height:64px;object-fit:contain;border-radius:8px"/>
-  <h4 style="margin:8px 0;color:#007cba;font-family:inherit">ETK Mining</h4>
-  <div style="font-size:13px;color:#444;margin-bottom:6px">No login required</div>
-  <input type="text" id="etk-user-id" placeholder="Enter your e-talk User ID" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;margin-bottom:10px">
-  <button onclick="startETKMining()" style="width:100%;padding:10px;background:#007cba;color:white;border:none;border-radius:4px;cursor:pointer">Start Mining</button>
-  <div id="etk-mining-status" style="margin-top:10px;font-size:13px"></div>
+  <div id="embed" class="tab-content">
+    <h2>Embed Code</h2>
+    <p>Add this code to your website to enable ETK mining</p>
+    <div class="alert alert-warning"><strong>Important:</strong> Configure credentials in the Admin tab first, then use the code below.</div>
+    <div class="form-group">
+      <label class="form-label">Embed Code</label>
+      <textarea id="embed-code" class="form-input" rows="12" readonly style="font-family: monospace; font-size: 12px;"></textarea>
+    </div>
+    <button onclick="copyEmbedCode()" class="btn btn-success"><i class="fa-solid fa-copy"></i> Copy Embed Code</button>
+    <button onclick="generateEmbedCode()" class="btn btn-info"><i class="fa-solid fa-rotate-right"></i> Generate Code</button>
+    <div class="alert alert-info mt-3">
+      <strong>Usage:</strong>
+      <ol>
+        <li>Copy the code above</li>
+        <li>Paste it into your website's HTML</li>
+        <li>Place it where you want the mining widget to appear</li>
+        <li>Users will need their e-talk.xyz User ID to start mining</li>
+      </ol>
+    </div>
+  </div>
 </div>
 <script>
-async function startETKMining() {
-  const userId = document.getElementById('etk-user-id').value.trim();
-  const statusEl = document.getElementById('etk-mining-status');
-  
-  if(!userId) {
-    statusEl.innerHTML = '<span style="color:red">Please enter your user ID</span>';
-    return;
-  }
-  
-  statusEl.innerHTML = '<span style="color:green">Starting mining...</span>';
-  
-  try {
-    // Check if site is configured
-    const configExists = localStorage.getItem('etk_miner_config') !== null;
-    if(!configExists) {
-      statusEl.innerHTML = '<span style="color:red">Site not configured for mining</span>';
-      return;
-    }
-    
-    // Get site configuration
-    const configEncoded = localStorage.getItem('etk_miner_config');
-    const config = JSON.parse(atob(configEncoded));
-    
-    // Call mining API
-    const response = await fetch('https://e-talk.xyz/wp-json/etk/v1/remote-mine', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-ETK-API-Key': config.apiKey,
-        'X-ETK-Secret': config.secret,
-        'X-ETK-Domain': '${hostname}'
-      },
-      body: JSON.stringify({ 
-        user_id: userId, 
-        partner_site_id: config.siteId 
-      })
-    });
-    
-    const text = await response.text();
-    
-    // Check for HTML error pages
-    if(text.includes('<!DOCTYPE') || text.includes('<html')) {
-      throw new Error('Server error - please try again later');
-    }
-    
-    const result = JSON.parse(text);
-    
-    if(response.ok) {
-      statusEl.innerHTML = '<span style="color:green">' + (result.message || 'Mining started successfully!') + '</span>';
-    } else {
-      throw new Error(result.message || 'Mining failed');
-    }
-  } catch(error) {
-    statusEl.innerHTML = '<span style="color:red">Error: ' + error.message + '</span>';
-  }
-}
-<\/script>`;
-  document.getElementById('embed-code').textContent = snippet;
+class ProfessionalETKMiner {
+  constructor(){this.baseURL='https://e-talk.xyz/wp-json/etk/v1';this.config={apiKey:'',secret:'',siteId:'',domain:'',lastTest:null,configHash:''};this.isConfigured=false;this.currentDomain=window.location.hostname;}
+  generateConfigHash(domain,password){return btoa(domain+'|'+password).substring(0,32);}
+  verifyAccess(password){const storedHash=localStorage.getItem('etk_config_hash');if(!storedHash)return true;const expectedHash=this.generateConfigHash(this.currentDomain,password);return storedHash===expectedHash;}
+  saveConfig(credentials,adminEmail,password){const storedHash=localStorage.getItem('etk_config_hash');if(storedHash&&!this.verifyAccess(password))throw new Error('Invalid admin password');this.config={...credentials,domain:this.currentDomain,lastTest:new Date().toISOString(),configHash:this.generateConfigHash(this.currentDomain,password)};localStorage.setItem('etk_miner_config',btoa(JSON.stringify(this.config)));localStorage.setItem('etk_config_hash',this.config.configHash);localStorage.setItem('etk_admin_email',adminEmail);this.isConfigured=true;return true;}
+  loadConfig(password){try{const encryptedConfig=localStorage.getItem('etk_miner_config');if(!encryptedConfig)return false;this.config=JSON.parse(atob(encryptedConfig));if(this.config.domain!==this.currentDomain)throw new Error('Configuration domain mismatch');const storedHash=localStorage.getItem('etk_config_hash');if(storedHash&&!this.verifyAccess(password))throw new Error('Configuration access denied - invalid password');this.isConfigured=true;return true;}catch(e){console.error('Config load error:',e);return false;}}
+  async testDirectConnection(){if(!this.isConfigured)throw new Error('Configuration not loaded');const r=await fetch(this.baseURL+'/test',{method:'GET',headers:{'Content-Type':'application/json'}});if(!r.ok)throw new Error(`Direct test failed: HTTP ${r.status}`);let t=await r.text();let d;try{d=JSON.parse(t);}catch(e){throw new Error('Invalid JSON response: '+t.substring(0,100));}return {success:true,data:d,method:'direct'};}
+  async testConnection(){if(!this.isConfigured)throw new Error('Configuration not loaded');try{return {...await this.testDirectConnection(),method:'direct'};}catch(e){const p=['https://api.allorigins.win/raw?url=','https://corsproxy.io/?','https://proxy.cors.sh/'];for(let i=0;i<p.length;i++){try{return {...await this.testWithProxy(p[i]),method:`proxy-${i+1}`};}catch(er){continue;} }throw new Error('All connection methods failed. Last error: '+e.message);}}
+  async testWithProxy(proxyUrl){const targetUrl=encodeURIComponent(this.baseURL+'/test');const r=await fetch(proxyUrl+targetUrl,{method:'GET',headers:{'Content-Type':'application/json'}});if(!r.ok)throw new Error(`Proxy test failed: HTTP ${r.status}`);let t=await r.text();let d;try{d=JSON.parse(t);}catch(e){if(t.includes('<!DOCTYPE')||t.includes('<html'))throw new Error('Proxy returned HTML error page');throw new Error('Invalid JSON from proxy: '+t.substring(0,100));}return {success:true,data:d};}
+  async mine(userId){if(!this.isConfigured)throw new Error('Miner not configured');if(!userId)throw new Error('User ID required');try{const r=await fetch(this.baseURL+'/remote-mine',{method:'POST',headers:{'Content-Type':'application/json','X-ETK-API-Key':this.config.apiKey,'X-ETK-Secret':this.config.secret,'X-ETK-Domain':this.currentDomain},body:JSON.stringify({user_id:userId,partner_site_id:this.config.siteId})});const t=await r.text();let d;try{d=JSON.parse(t);}catch(e){throw new Error('Invalid JSON response: '+t.substring(0,100));}if(!r.ok)throw new Error(`HTTP ${r.status}: ${d.message||'Unknown error'}`);return {success:true,data:d,method:'direct'};}catch(e){const p=['https://api.allorigins.win/raw?url=','https://corsproxy.io/?','https://proxy.cors.sh/'];for(let i=0;i<p.length;i++){try{return {...await this.mineWithProxy(userId,p[i]),method:`proxy-${i+1}`};}catch(er){if(i===p.length-1)throw new Error('All mining methods failed. Last error: '+e.message);}}throw e;}}
+  async mineWithProxy(userId,proxyUrl){const targetUrl=encodeURIComponent(this.baseURL+'/remote-mine');const requestBody=JSON.stringify({user_id:userId,partner_site_id:this.config.siteId});let fullUrl;fullUrl=proxyUrl.includes('corsproxy.io')?proxyUrl+this.baseURL+'/remote-mine':proxyUrl+targetUrl;const r=await fetch(fullUrl,{method:'POST',headers:{'Content-Type':'application/json','X-ETK-API-Key':this.config.apiKey,'X-ETK-Secret':this.config.secret,'X-ETK-Domain':this.currentDomain},body:requestBody});const t=await r.text();let d;try{d=JSON.parse(t);}catch(e){if(t.includes('<!DOCTYPE')||t.includes('<html'))throw new Error('Proxy returned HTML error page');throw new Error('Invalid JSON from proxy: '+t.substring(0,100));}if(!r.ok)throw new Error(`HTTP ${r.status}: ${d.message||'Unknown error'}`);return {success:true,data:d};}
+  getStatus(){return {isConfigured:this.isConfigured,domain:this.config.domain,lastTest:this.config.lastTest,apiKey:this.config.apiKey?'••••'+this.config.apiKey.slice(-8):'Not set'};}
+  hasExistingConfig(){return localStorage.getItem('etk_miner_config')!==null;}
+  clearConfig(){localStorage.removeItem('etk_miner_config');localStorage.removeItem('etk_config_hash');localStorage.removeItem('etk_admin_email');this.isConfigured=false;this.config={apiKey:'',secret:'',siteId:'',domain:'',lastTest:null,configHash:''};}
 }
 
-/* copy embed */
-function copyEmbedCode(){
-  const text = document.getElementById('embed-code').textContent || '';
-  navigator.clipboard.writeText(text).then(()=> alert('Embed code copied to clipboard'), ()=> alert('Copy failed'));
-}
+const etkMiner=new ProfessionalETKMiner();
 
-/* small helper */
-window.testConnection = testConnection;
-window.resetConfiguration = resetConfiguration;
-window.generateEmbedCode = generateEmbedCode;
-window.copyEmbedCode = copyEmbedCode;
-window.startUserMining = startUserMining;
-window.pauseMining = pauseMining;
-window.attemptAdminLogin = attemptAdminLogin;
-window.logoutAdmin = logoutAdmin;
-window.showAdminLogin = showAdminLogin;
-window.showVisitorInterface = showVisitorInterface;
-window.startVisitorMining = startVisitorMining;
+function switchTab(t){document.querySelectorAll('.tab-content').forEach(e=>e.classList.remove('active'));document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));document.getElementById(t).classList.add('active');document.querySelector(`.tab[onclick="switchTab('${t}')"]`).classList.add('active');if(t==='embed')generateEmbedCode();else if(t==='widget')updateWidgetPreview();}
+function showAlert(m,type='info'){const d=document.getElementById('config-status');d.innerHTML=`<div class="alert alert-${type}">${m}</div>`;setTimeout(()=>d.innerHTML='',5000);}
+document.addEventListener('DOMContentLoaded',function(){document.getElementById('current-domain').textContent=window.location.hostname;if(etkMiner.hasExistingConfig()){document.getElementById('admin-email').value=localStorage.getItem('etk_admin_email')||'';showAlert('Existing configuration found. Enter your admin password to manage settings.','info');updateConfigStatus();}else{showAlert('Welcome! Please configure your ETK mining integration.','info');}generateEmbedCode();});
 
-/* initialize UI state */
-generateEmbedCode();
-updateConfigStatus();
-updateWidgetPreview();
+document.getElementById('admin-config-form').addEventListener('submit',function(e){e.preventDefault();const a=document.getElementById('admin-email').value,p=document.getElementById('admin-password').value,c=document.getElementById('config-password').value;if(!a||!p||!c){showAlert('Please fill in all required fields','error');return;}const creds={apiKey:document.getElementById('api-key').value.trim(),secret:document.getElementById('api-secret').value.trim(),siteId:document.getElementById('site-id').value.trim()};try{etkMiner.saveConfig(creds,a,c);showAlert('Configuration saved successfully!','success');updateConfigStatus();}catch(e){showAlert(e.message,'error');}});
 
+async function testDirect(){try{showAlert('Testing direct connection...','info');const r=await etkMiner.testDirectConnection();showAlert(`Direct connection successful! Method: ${r.method}`,'success');}catch(e){showAlert('Direct connection failed: '+e.message,'error');}}
+async function testConnection(){const p=document.getElementById('admin-password').value;if(!p){showAlert('Please enter admin password first','error');return;}try{if(!etkMiner.loadConfig(p))throw new Error('Invalid password or no configuration found');const r=await etkMiner.testConnection();showAlert(`Connection successful! Method: ${r.method}`,'success');updateConfigStatus();}catch(e){showAlert('Connection failed: '+e.message,'error');}}
+function updateConfigStatus(){const s=etkMiner.getStatus(),d=document.getElementById('saved-config');if(s.isConfigured){d.classList.remove('hidden');document.getElementById('config-domain').textContent=s.domain;document.getElementById('config-status-badge').textContent='Configured';document.getElementById('config-last-test').textContent=s.lastTest?new Date(s.lastTest).toLocaleString():'Never tested';}else if(etkMiner.hasExistingConfig()){d.classList.remove('hidden');document.getElementById('config-domain').textContent='Configuration locked';document.getElementById('config-status-badge').textContent='Password required';document.getElementById('config-last-test').textContent='Enter password to unlock';}else{d.classList.add('hidden');}}
+function resetConfiguration(){if(confirm('Are you sure you want to reset all configuration?')){etkMiner.clearConfig();document.getElementById('admin-config-form').reset();document.getElementById('saved-config').classList.add('hidden');showAlert('Configuration reset successfully.','info');}}
+function updateWidgetPreview(){const m=document.getElementById('widget-message'),i=document.getElementById('mining-interface');if(etkMiner.isConfigured){m.classList.add('hidden');i.classList.remove('hidden');}else{m.classList.remove('hidden');i.classList.add('hidden');}}
+async function startUserMining(){const u=document.getElementById('user-id').value.trim(),b=document.getElementById('mine-btn');if(!u){showWidgetResult('Please enter your User ID','error');return;}b.disabled=true;b.innerHTML='<i class="fa-solid fa-hammer"></i> Mining...';showWidgetResult('Mining in progress...','info');try{const r=await etkMiner.mine(u);if(r.success){let m='Mining success';if(r.method!=='direct')m+=` (via ${r.method})`;showWidgetResult(m,'success');document.getElementById('last-reward').textContent='ETK Mined!';document.getElementById('mining-status').textContent='Success';}else showWidgetResult(r.error,'error');}catch(e){showWidgetResult('Mining failed: '+e.message,'error');}finally{b.disabled=false;b.innerHTML='<i class="fa-solid fa-hammer"></i> Start Mining ETK';}}
+function showWidgetResult(m,t){document.getElementById('widget-result').innerHTML=`<div class="alert alert-${t}">${m}</div>`;}
+
+function generateEmbedCode(){
+const hostname=etkMiner.currentDomain;
+const snippet=`<div id="etk-mining-widget" style="max-width:320px;padding:16px;border-radius:8px;background:#f8f9fa;border:1px solid #eee;text-align:center">
+<img src="https://e-talk.xyz/wp-content/uploads/2025/09/Webchain200-x-200-px-2.webp" alt="ETK" style="width:64px;height:64px;object-fit:contain;border-radius:8px"/>
+<h4 style="margin:8px 0;color:#007cba;font-family:inherit">ETK Mining</h4>
+<div style="font-size:13px;color:#444;margin-bottom:6px">No login required</div>
+<input type="text" id="etk-user-id" placeholder="Enter your e-talk User ID" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;margin-bottom:10px">
+<button onclick="startETKMining()" style="width:100%;padding:10px;background:#007cba;color:white;border:none;border-radius:4px;cursor:pointer">Start Mining</button>
+<div id="etk-mining-status" style="margin-top:10px;font-size:13px"></div>
+</div>
+<script>
+async function startETKMining(){
+const u=document.getElementById('etk-user-id').value.trim(),s=document.getElementById('etk-mining-status');if(!u){s.innerHTML='<span style="color:red">Please enter your user ID</span>';return;}s.innerHTML='<span style="color:green">Starting mining...</span>';
+try{const c=localStorage.getItem('etk_miner_config');if(!c){s.innerHTML='<span style="color:red">Site not configured for mining</span>';return;}const cfg=JSON.parse(atob(c));const r=await fetch('https://e-talk.xyz/wp-json/etk/v1/remote-mine',{method:'POST',headers:{'Content-Type':'application/json','X-ETK-API-Key':cfg.apiKey,'X-ETK-Secret':cfg.secret,'X-ETK-Domain':'${hostname}'},body:JSON.stringify({user_id:u,partner_site_id:cfg.siteId})});const t=await r.text();if(t.includes('<!DOCTYPE')||t.includes('<html'))throw new Error('Server error');const res=JSON.parse(t);if(r.ok)s.innerHTML='<span style="color:green">'+(res.message||'Mining started successfully!')+'</span>';else throw new Error(res.message||'Mining failed');}catch(e){s.innerHTML='<span style="color:red">Error: '+e.message+'</span>';}}<\/script>`;
+document.getElementById('embed-code').textContent=snippet;}
+
+function copyEmbedCode(){const e=document.getElementById('embed-code');e.select();document.execCommand('copy');showAlert('Embed code copied to clipboard!','success');}
 </script>
 </body>
 </html>
