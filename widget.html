@@ -167,40 +167,435 @@ body {font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;line-height:1.
 </div>
 <script>
 class ProfessionalETKMiner {
-  constructor(){this.baseURL='https://e-talk.xyz/wp-json/etk/v1';this.config={apiKey:'',secret:'',siteId:'',domain:'',lastTest:null,configHash:''};this.isConfigured=false;this.currentDomain=window.location.hostname;}
-  generateConfigHash(domain,password){return btoa(domain+'|'+password).substring(0,32);}
-  verifyAccess(password){const storedHash=localStorage.getItem('etk_config_hash');if(!storedHash)return true;const expectedHash=this.generateConfigHash(this.currentDomain,password);return storedHash===expectedHash;}
-  saveConfig(credentials,adminEmail,password){const storedHash=localStorage.getItem('etk_config_hash');if(storedHash&&!this.verifyAccess(password))throw new Error('Invalid admin password');this.config={...credentials,domain:this.currentDomain,lastTest:new Date().toISOString(),configHash:this.generateConfigHash(this.currentDomain,password)};localStorage.setItem('etk_miner_config',btoa(JSON.stringify(this.config)));localStorage.setItem('etk_config_hash',this.config.configHash);localStorage.setItem('etk_admin_email',adminEmail);this.isConfigured=true;return true;}
-  loadConfig(password){try{const encryptedConfig=localStorage.getItem('etk_miner_config');if(!encryptedConfig)return false;this.config=JSON.parse(atob(encryptedConfig));if(this.config.domain!==this.currentDomain)throw new Error('Configuration domain mismatch');const storedHash=localStorage.getItem('etk_config_hash');if(storedHash&&!this.verifyAccess(password))throw new Error('Configuration access denied - invalid password');this.isConfigured=true;return true;}catch(e){console.error('Config load error:',e);return false;}}
-  async testDirectConnection(){if(!this.isConfigured)throw new Error('Configuration not loaded');const r=await fetch(this.baseURL+'/test',{method:'GET',headers:{'Content-Type':'application/json'}});if(!r.ok)throw new Error(`Direct test failed: HTTP ${r.status}`);let t=await r.text();let d;try{d=JSON.parse(t);}catch(e){throw new Error('Invalid JSON response: '+t.substring(0,100));}return {success:true,data:d,method:'direct'};}
-  async testConnection(){if(!this.isConfigured)throw new Error('Configuration not loaded');try{return {...await this.testDirectConnection(),method:'direct'};}catch(e){const p=['https://api.allorigins.win/raw?url=','https://corsproxy.io/?','https://proxy.cors.sh/'];for(let i=0;i<p.length;i++){try{return {...await this.testWithProxy(p[i]),method:`proxy-${i+1}`};}catch(er){continue;} }throw new Error('All connection methods failed. Last error: '+e.message);}}
-  async testWithProxy(proxyUrl){const targetUrl=encodeURIComponent(this.baseURL+'/test');const r=await fetch(proxyUrl+targetUrl,{method:'GET',headers:{'Content-Type':'application/json'}});if(!r.ok)throw new Error(`Proxy test failed: HTTP ${r.status}`);let t=await r.text();let d;try{d=JSON.parse(t);}catch(e){if(t.includes('<!DOCTYPE')||t.includes('<html'))throw new Error('Proxy returned HTML error page');throw new Error('Invalid JSON from proxy: '+t.substring(0,100));}return {success:true,data:d};}
-  async mine(userId){if(!this.isConfigured)throw new Error('Miner not configured');if(!userId)throw new Error('User ID required');try{const r=await fetch(this.baseURL+'/remote-mine',{method:'POST',headers:{'Content-Type':'application/json','X-ETK-API-Key':this.config.apiKey,'X-ETK-Secret':this.config.secret,'X-ETK-Domain':this.currentDomain},body:JSON.stringify({user_id:userId,partner_site_id:this.config.siteId})});const t=await r.text();let d;try{d=JSON.parse(t);}catch(e){throw new Error('Invalid JSON response: '+t.substring(0,100));}if(!r.ok)throw new Error(`HTTP ${r.status}: ${d.message||'Unknown error'}`);return {success:true,data:d,method:'direct'};}catch(e){const p=['https://api.allorigins.win/raw?url=','https://corsproxy.io/?','https://proxy.cors.sh/'];for(let i=0;i<p.length;i++){try{return {...await this.mineWithProxy(userId,p[i]),method:`proxy-${i+1}`};}catch(er){if(i===p.length-1)throw new Error('All mining methods failed. Last error: '+e.message);}}throw e;}}
-  async mineWithProxy(userId,proxyUrl){const targetUrl=encodeURIComponent(this.baseURL+'/remote-mine');const requestBody=JSON.stringify({user_id:userId,partner_site_id:this.config.siteId});let fullUrl;fullUrl=proxyUrl.includes('corsproxy.io')?proxyUrl+this.baseURL+'/remote-mine':proxyUrl+targetUrl;const r=await fetch(fullUrl,{method:'POST',headers:{'Content-Type':'application/json','X-ETK-API-Key':this.config.apiKey,'X-ETK-Secret':this.config.secret,'X-ETK-Domain':this.currentDomain},body:requestBody});const t=await r.text();let d;try{d=JSON.parse(t);}catch(e){if(t.includes('<!DOCTYPE')||t.includes('<html'))throw new Error('Proxy returned HTML error page');throw new Error('Invalid JSON from proxy: '+t.substring(0,100));}if(!r.ok)throw new Error(`HTTP ${r.status}: ${d.message||'Unknown error'}`);return {success:true,data:d};}
-  getStatus(){return {isConfigured:this.isConfigured,domain:this.config.domain,lastTest:this.config.lastTest,apiKey:this.config.apiKey?'••••'+this.config.apiKey.slice(-8):'Not set'};}
-  hasExistingConfig(){return localStorage.getItem('etk_miner_config')!==null;}
-  clearConfig(){localStorage.removeItem('etk_miner_config');localStorage.removeItem('etk_config_hash');localStorage.removeItem('etk_admin_email');this.isConfigured=false;this.config={apiKey:'',secret:'',siteId:'',domain:'',lastTest:null,configHash:''};}
+  constructor(){
+    this.baseURL = 'https://e-talk.xyz/wp-json/etk/v1';
+    this.config = {apiKey: '', secret: '', siteId: '', domain: '', lastTest: null, configHash: ''};
+    this.isConfigured = false;
+    this.currentDomain = window.location.hostname;
+  }
+
+  generateConfigHash(domain, password) {
+    return btoa(domain + '|' + password).substring(0, 32);
+  }
+
+  verifyAccess(password) {
+    const storedHash = localStorage.getItem('etk_config_hash');
+    if (!storedHash) return true;
+    const expectedHash = this.generateConfigHash(this.currentDomain, password);
+    return storedHash === expectedHash;
+  }
+
+  async saveConfig(credentials, adminEmail, password) {
+    const storedHash = localStorage.getItem('etk_config_hash');
+    if (storedHash && !this.verifyAccess(password)) {
+      throw new Error('Invalid admin password');
+    }
+
+    this.config = {
+      ...credentials,
+      domain: this.currentDomain,
+      lastTest: new Date().toISOString(),
+      configHash: this.generateConfigHash(this.currentDomain, password)
+    };
+
+    try {
+      const response = await fetch(this.baseURL + '/save-partner-config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-ETK-API-Key': credentials.apiKey,
+          'X-ETK-Secret': credentials.secret
+        },
+        body: JSON.stringify({
+          domain: this.currentDomain,
+          config: this.config,
+          adminEmail: adminEmail
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to save configuration to server');
+      }
+
+      localStorage.setItem('etk_miner_config', btoa(JSON.stringify(this.config)));
+      localStorage.setItem('etk_config_hash', this.config.configHash);
+      localStorage.setItem('etk_admin_email', adminEmail);
+      
+      this.isConfigured = true;
+      return true;
+    } catch (error) {
+      console.error('Server save failed:', error);
+      throw new Error('Failed to save configuration: ' + error.message);
+    }
+  }
+
+  async loadConfigForUsers() {
+    try {
+      const response = await fetch(this.baseURL + '/get-partner-config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          domain: this.currentDomain
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.config) {
+          this.config = result.config;
+          this.isConfigured = true;
+          return true;
+        }
+      } else {
+        const errorData = await response.json();
+        console.log('No server config found:', errorData.message);
+      }
+    } catch (error) {
+      console.error('Server config load failed:', error);
+    }
+
+    return false;
+  }
+
+  loadConfig(password) {
+    try {
+      const encryptedConfig = localStorage.getItem('etk_miner_config');
+      if (!encryptedConfig) return false;
+      
+      this.config = JSON.parse(atob(encryptedConfig));
+      if (this.config.domain !== this.currentDomain) {
+        throw new Error('Configuration domain mismatch');
+      }
+      
+      const storedHash = localStorage.getItem('etk_config_hash');
+      if (storedHash && !this.verifyAccess(password)) {
+        throw new Error('Configuration access denied - invalid password');
+      }
+      
+      this.isConfigured = true;
+      return true;
+    } catch (e) {
+      console.error('Config load error:', e);
+      return false;
+    }
+  }
+
+  async testDirectConnection() {
+    if (!this.isConfigured) throw new Error('Configuration not loaded');
+    const r = await fetch(this.baseURL + '/test', {
+      method: 'GET',
+      headers: {'Content-Type': 'application/json'}
+    });
+    if (!r.ok) throw new Error(`Direct test failed: HTTP ${r.status}`);
+    let t = await r.text();
+    let d;
+    try { d = JSON.parse(t); } 
+    catch (e) { throw new Error('Invalid JSON response: ' + t.substring(0, 100)); }
+    return {success: true, data: d, method: 'direct'};
+  }
+
+  async testConnection() {
+    if (!this.isConfigured) throw new Error('Configuration not loaded');
+    try {
+      return {...await this.testDirectConnection(), method: 'direct'};
+    } catch (e) {
+      const p = ['https://api.allorigins.win/raw?url=', 'https://corsproxy.io/?', 'https://proxy.cors.sh/'];
+      for (let i = 0; i < p.length; i++) {
+        try {
+          return {...await this.testWithProxy(p[i]), method: `proxy-${i+1}`};
+        } catch (er) { continue; } 
+      }
+      throw new Error('All connection methods failed. Last error: ' + e.message);
+    }
+  }
+
+  async testWithProxy(proxyUrl) {
+    const targetUrl = encodeURIComponent(this.baseURL + '/test');
+    const r = await fetch(proxyUrl + targetUrl, {
+      method: 'GET',
+      headers: {'Content-Type': 'application/json'}
+    });
+    if (!r.ok) throw new Error(`Proxy test failed: HTTP ${r.status}`);
+    let t = await r.text();
+    let d;
+    try { d = JSON.parse(t); } 
+    catch (e) {
+      if (t.includes('<!DOCTYPE') || t.includes('<html')) throw new Error('Proxy returned HTML error page');
+      throw new Error('Invalid JSON from proxy: ' + t.substring(0, 100));
+    }
+    return {success: true, data: d};
+  }
+
+  async mine(userId) {
+    if (!this.isConfigured) throw new Error('Miner not configured');
+    if (!userId) throw new Error('User ID required');
+    try {
+      const r = await fetch(this.baseURL + '/remote-mine', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-ETK-API-Key': this.config.apiKey,
+          'X-ETK-Secret': this.config.secret,
+          'X-ETK-Domain': this.currentDomain
+        },
+        body: JSON.stringify({user_id: userId, partner_site_id: this.config.siteId})
+      });
+      const t = await r.text();
+      let d;
+      try { d = JSON.parse(t); } 
+      catch (e) { throw new Error('Invalid JSON response: ' + t.substring(0, 100)); }
+      if (!r.ok) throw new Error(`HTTP ${r.status}: ${d.message || 'Unknown error'}`);
+      return {success: true, data: d, method: 'direct'};
+    } catch (e) {
+      const p = ['https://api.allorigins.win/raw?url=', 'https://corsproxy.io/?', 'https://proxy.cors.sh/'];
+      for (let i = 0; i < p.length; i++) {
+        try {
+          return {...await this.mineWithProxy(userId, p[i]), method: `proxy-${i+1}`};
+        } catch (er) {
+          if (i === p.length - 1) throw new Error('All mining methods failed. Last error: ' + e.message);
+        }
+      }
+      throw e;
+    }
+  }
+
+  async mineWithProxy(userId, proxyUrl) {
+    const targetUrl = encodeURIComponent(this.baseURL + '/remote-mine');
+    const requestBody = JSON.stringify({user_id: userId, partner_site_id: this.config.siteId});
+    let fullUrl;
+    fullUrl = proxyUrl.includes('corsproxy.io') ? proxyUrl + this.baseURL + '/remote-mine' : proxyUrl + targetUrl;
+    const r = await fetch(fullUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-ETK-API-Key': this.config.apiKey,
+        'X-ETK-Secret': this.config.secret,
+        'X-ETK-Domain': this.currentDomain
+      },
+      body: requestBody
+    });
+    const t = await r.text();
+    let d;
+    try { d = JSON.parse(t); } 
+    catch (e) {
+      if (t.includes('<!DOCTYPE') || t.includes('<html')) throw new Error('Proxy returned HTML error page');
+      throw new Error('Invalid JSON from proxy: ' + t.substring(0, 100));
+    }
+    if (!r.ok) throw new Error(`HTTP ${r.status}: ${d.message || 'Unknown error'}`);
+    return {success: true, data: d};
+  }
+
+  getStatus() {
+    return {
+      isConfigured: this.isConfigured,
+      domain: this.config.domain,
+      lastTest: this.config.lastTest,
+      apiKey: this.config.apiKey ? '••••' + this.config.apiKey.slice(-8) : 'Not set'
+    };
+  }
+
+  hasExistingConfig() {
+    return localStorage.getItem('etk_miner_config') !== null;
+  }
+
+  clearConfig() {
+    localStorage.removeItem('etk_miner_config');
+    localStorage.removeItem('etk_config_hash');
+    localStorage.removeItem('etk_admin_email');
+    this.isConfigured = false;
+    this.config = {apiKey: '', secret: '', siteId: '', domain: '', lastTest: null, configHash: ''};
+  }
 }
 
-const etkMiner=new ProfessionalETKMiner();
+const etkMiner = new ProfessionalETKMiner();
 
-function switchTab(t){document.querySelectorAll('.tab-content').forEach(e=>e.classList.remove('active'));document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));document.getElementById(t).classList.add('active');document.querySelector(`.tab[onclick="switchTab('${t}')"]`).classList.add('active');if(t==='embed')generateEmbedCode();else if(t==='widget')updateWidgetPreview();}
-function showAlert(m,type='info'){const d=document.getElementById('config-status');d.innerHTML=`<div class="alert alert-${type}">${m}</div>`;setTimeout(()=>d.innerHTML='',5000);}
-document.addEventListener('DOMContentLoaded',function(){document.getElementById('current-domain').textContent=window.location.hostname;if(etkMiner.hasExistingConfig()){document.getElementById('admin-email').value=localStorage.getItem('etk_admin_email')||'';showAlert('Existing configuration found. Enter your admin password to manage settings.','info');updateConfigStatus();}else{showAlert('Welcome! Please configure your ETK mining integration.','info');}generateEmbedCode();});
+function switchTab(t) {
+  document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(e => e.classList.remove('active'));
+  document.getElementById(t).classList.add('active');
+  document.querySelector(`.tab[onclick="switchTab('${t}')"]`).classList.add('active');
+  if (t === 'embed') generateEmbedCode();
+  else if (t === 'widget') updateWidgetPreview();
+}
 
-document.getElementById('admin-config-form').addEventListener('submit',function(e){e.preventDefault();const a=document.getElementById('admin-email').value,p=document.getElementById('admin-password').value,c=document.getElementById('config-password').value;if(!a||!p||!c){showAlert('Please fill in all required fields','error');return;}const creds={apiKey:document.getElementById('api-key').value.trim(),secret:document.getElementById('api-secret').value.trim(),siteId:document.getElementById('site-id').value.trim()};try{etkMiner.saveConfig(creds,a,c);showAlert('Configuration saved successfully!','success');updateConfigStatus();}catch(e){showAlert(e.message,'error');}});
+function showAlert(m, type = 'info') {
+  const d = document.getElementById('config-status');
+  d.innerHTML = `<div class="alert alert-${type}">${m}</div>`;
+  setTimeout(() => d.innerHTML = '', 5000);
+}
 
-async function testDirect(){try{showAlert('Testing direct connection...','info');const r=await etkMiner.testDirectConnection();showAlert(`Direct connection successful! Method: ${r.method}`,'success');}catch(e){showAlert('Direct connection failed: '+e.message,'error');}}
-async function testConnection(){const p=document.getElementById('admin-password').value;if(!p){showAlert('Please enter admin password first','error');return;}try{if(!etkMiner.loadConfig(p))throw new Error('Invalid password or no configuration found');const r=await etkMiner.testConnection();showAlert(`Connection successful! Method: ${r.method}`,'success');updateConfigStatus();}catch(e){showAlert('Connection failed: '+e.message,'error');}}
-function updateConfigStatus(){const s=etkMiner.getStatus(),d=document.getElementById('saved-config');if(s.isConfigured){d.classList.remove('hidden');document.getElementById('config-domain').textContent=s.domain;document.getElementById('config-status-badge').textContent='Configured';document.getElementById('config-last-test').textContent=s.lastTest?new Date(s.lastTest).toLocaleString():'Never tested';}else if(etkMiner.hasExistingConfig()){d.classList.remove('hidden');document.getElementById('config-domain').textContent='Configuration locked';document.getElementById('config-status-badge').textContent='Password required';document.getElementById('config-last-test').textContent='Enter password to unlock';}else{d.classList.add('hidden');}}
-function resetConfiguration(){if(confirm('Are you sure you want to reset all configuration?')){etkMiner.clearConfig();document.getElementById('admin-config-form').reset();document.getElementById('saved-config').classList.add('hidden');showAlert('Configuration reset successfully.','info');}}
-function updateWidgetPreview(){const m=document.getElementById('widget-message'),i=document.getElementById('mining-interface');if(etkMiner.isConfigured){m.classList.add('hidden');i.classList.remove('hidden');}else{m.classList.remove('hidden');i.classList.add('hidden');}}
-async function startUserMining(){const u=document.getElementById('user-id').value.trim(),b=document.getElementById('mine-btn');if(!u){showWidgetResult('Please enter your User ID','error');return;}b.disabled=true;b.innerHTML='<i class="fa-solid fa-hammer"></i> Mining...';showWidgetResult('Mining in progress...','info');try{const r=await etkMiner.mine(u);if(r.success){let m='Mining success';if(r.method!=='direct')m+=` (via ${r.method})`;showWidgetResult(m,'success');document.getElementById('last-reward').textContent='ETK Mined!';document.getElementById('mining-status').textContent='Success';}else showWidgetResult(r.error,'error');}catch(e){showWidgetResult('Mining failed: '+e.message,'error');}finally{b.disabled=false;b.innerHTML='<i class="fa-solid fa-hammer"></i> Start Mining ETK';}}
-function showWidgetResult(m,t){document.getElementById('widget-result').innerHTML=`<div class="alert alert-${t}">${m}</div>`;}
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('current-domain').textContent = window.location.hostname;
+  
+  etkMiner.loadConfigForUsers().then(loaded => {
+    if (loaded) {
+      updateConfigStatus();
+      updateWidgetPreview();
+      showAlert('Site configuration loaded successfully from server', 'success');
+    } else {
+      
+      if (etkMiner.hasExistingConfig()) {
+        document.getElementById('admin-email').value = localStorage.getItem('etk_admin_email') || '';
+        showAlert('Existing local configuration found. Enter admin password to manage, or save to server.', 'info');
+        updateConfigStatus();
+      } else {
+        showAlert('No configuration found. Please set up your ETK mining integration.', 'info');
+      }
+    }
+  }).catch(error => {
+    console.error('Error loading config:', error);
+    showAlert('Error loading configuration: ' + error.message, 'error');
+  });
+  
+  generateEmbedCode();
+});
 
-function generateEmbedCode(){
-const hostname=etkMiner.currentDomain;
-const snippet=`<div id="etk-mining-widget" style="max-width:320px;padding:16px;border-radius:8px;background:#f8f9fa;border:1px solid #eee;text-align:center">
+document.getElementById('admin-config-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const a = document.getElementById('admin-email').value;
+  const p = document.getElementById('admin-password').value;
+  const c = document.getElementById('config-password').value;
+  
+  if (!a || !p || !c) {
+    showAlert('Please fill in all required fields', 'error');
+    return;
+  }
+  
+  const creds = {
+    apiKey: document.getElementById('api-key').value.trim(),
+    secret: document.getElementById('api-secret').value.trim(),
+    siteId: document.getElementById('site-id').value.trim()
+  };
+  
+  try {
+    await etkMiner.saveConfig(creds, a, c);
+    showAlert('Configuration saved successfully to server!', 'success');
+    updateConfigStatus();
+    updateWidgetPreview();
+  } catch (e) {
+    showAlert(e.message, 'error');
+  }
+});
+
+async function testDirect() {
+  try {
+    showAlert('Testing direct connection...', 'info');
+    const r = await etkMiner.testDirectConnection();
+    showAlert(`Direct connection successful! Method: ${r.method}`, 'success');
+  } catch (e) {
+    showAlert('Direct connection failed: ' + e.message, 'error');
+  }
+}
+
+async function testConnection() {
+  const p = document.getElementById('admin-password').value;
+  if (!p) {
+    showAlert('Please enter admin password first', 'error');
+    return;
+  }
+  
+  try {
+    if (!etkMiner.loadConfig(p)) throw new Error('Invalid password or no configuration found');
+    const r = await etkMiner.testConnection();
+    showAlert(`Connection successful! Method: ${r.method}`, 'success');
+    updateConfigStatus();
+  } catch (e) {
+    showAlert('Connection failed: ' + e.message, 'error');
+  }
+}
+
+function updateConfigStatus() {
+  const s = etkMiner.getStatus();
+  const d = document.getElementById('saved-config');
+  
+  if (s.isConfigured) {
+    d.classList.remove('hidden');
+    document.getElementById('config-domain').textContent = s.domain;
+    document.getElementById('config-status-badge').textContent = 'Configured';
+    document.getElementById('config-last-test').textContent = s.lastTest ? 
+      new Date(s.lastTest).toLocaleString() : 'Never tested';
+  } else if (etkMiner.hasExistingConfig()) {
+    d.classList.remove('hidden');
+    document.getElementById('config-domain').textContent = 'Configuration locked';
+    document.getElementById('config-status-badge').textContent = 'Password required';
+    document.getElementById('config-last-test').textContent = 'Enter password to unlock';
+  } else {
+    d.classList.add('hidden');
+  }
+}
+
+function resetConfiguration() {
+  if (confirm('Are you sure you want to reset all configuration?')) {
+    etkMiner.clearConfig();
+    document.getElementById('admin-config-form').reset();
+    document.getElementById('saved-config').classList.add('hidden');
+    showAlert('Configuration reset successfully.', 'info');
+    updateWidgetPreview();
+  }
+}
+
+function updateWidgetPreview() {
+  const m = document.getElementById('widget-message');
+  const i = document.getElementById('mining-interface');
+  
+  if (etkMiner.isConfigured) {
+    m.classList.add('hidden');
+    i.classList.remove('hidden');
+    
+    const statusDiv = document.getElementById('widget-message');
+    if (statusDiv) {
+      statusDiv.innerHTML = '<i class="fa-solid fa-check"></i> Widget configured with server settings';
+      statusDiv.className = 'alert alert-success';
+    }
+  } else {
+    m.classList.remove('hidden');
+    i.classList.add('hidden');
+  }
+}
+
+async function startUserMining() {
+  const u = document.getElementById('user-id').value.trim();
+  const b = document.getElementById('mine-btn');
+  
+  if (!u) {
+    showWidgetResult('Please enter your User ID', 'error');
+    return;
+  }
+  
+  b.disabled = true;
+  b.innerHTML = '<i class="fa-solid fa-hammer"></i> Mining...';
+  showWidgetResult('Mining in progress...', 'info');
+  
+  try {
+    const r = await etkMiner.mine(u);
+    if (r.success) {
+      let m = 'Mining success';
+      if (r.method !== 'direct') m += ` (via ${r.method})`;
+      showWidgetResult(m, 'success');
+      document.getElementById('last-reward').textContent = 'ETK Mined!';
+      document.getElementById('mining-status').textContent = 'Success';
+    } else {
+      showWidgetResult(r.error, 'error');
+    }
+  } catch (e) {
+    showWidgetResult('Mining failed: ' + e.message, 'error');
+  } finally {
+    b.disabled = false;
+    b.innerHTML = '<i class="fa-solid fa-hammer"></i> Start Mining ETK';
+  }
+}
+
+function showWidgetResult(m, t) {
+  document.getElementById('widget-result').innerHTML = `<div class="alert alert-${t}">${m}</div>`;
+}
+
+function generateEmbedCode() {
+  const hostname = etkMiner.currentDomain;
+  
+  const snippet = `<div id="etk-mining-widget" style="max-width:320px;padding:16px;border-radius:8px;background:#f8f9fa;border:1px solid #eee;text-align:center">
 <img src="https://e-talk.xyz/wp-content/uploads/2025/09/Webchain200-x-200-px-2.webp" alt="ETK" style="width:64px;height:64px;object-fit:contain;border-radius:8px"/>
 <h4 style="margin:8px 0;color:#007cba;font-family:inherit">ETK Mining</h4>
 <div style="font-size:13px;color:#444;margin-bottom:6px">No login required</div>
@@ -209,12 +604,122 @@ const snippet=`<div id="etk-mining-widget" style="max-width:320px;padding:16px;b
 <div id="etk-mining-status" style="margin-top:10px;font-size:13px"></div>
 </div>
 <script>
-async function startETKMining(){
-const u=document.getElementById('etk-user-id').value.trim(),s=document.getElementById('etk-mining-status');if(!u){s.innerHTML='<span style="color:red">Please enter your user ID</span>';return;}s.innerHTML='<span style="color:green">Starting mining...</span>';
-try{const c=localStorage.getItem('etk_miner_config');if(!c){s.innerHTML='<span style="color:red">Site not configured for mining</span>';return;}const cfg=JSON.parse(atob(c));const r=await fetch('https://e-talk.xyz/wp-json/etk/v1/remote-mine',{method:'POST',headers:{'Content-Type':'application/json','X-ETK-API-Key':cfg.apiKey,'X-ETK-Secret':cfg.secret,'X-ETK-Domain':'${hostname}'},body:JSON.stringify({user_id:u,partner_site_id:cfg.siteId})});const t=await r.text();if(t.includes('<!DOCTYPE')||t.includes('<html'))throw new Error('Server error');const res=JSON.parse(t);if(r.ok)s.innerHTML='<span style="color:green">'+(res.message||'Mining started successfully!')+'</span>';else throw new Error(res.message||'Mining failed');}catch(e){s.innerHTML='<span style="color:red">Error: '+e.message+'</span>';}}<\/script>`;
-document.getElementById('embed-code').textContent=snippet;}
+async function startETKMining() {
+  const userId = document.getElementById('etk-user-id').value.trim();
+  const statusDiv = document.getElementById('etk-mining-status');
+  
+  if (!userId) {
+    statusDiv.innerHTML = '<span style="color:red">Please enter your user ID</span>';
+    return;
+  }
+  
+  statusDiv.innerHTML = '<span style="color:green">Starting mining...</span>';
+  
+  try {
+    const configResponse = await fetch('https://e-talk.xyz/wp-json/etk/v1/get-partner-config', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({domain: window.location.hostname})
+    });
+    
+    if (!configResponse.ok) {
+      const errorData = await configResponse.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Site not configured for mining');
+    }
+    
+    const configResult = await configResponse.json();
+    if (!configResult.success || !configResult.config) {
+      throw new Error('Site configuration not found on server');
+    }
+    
+    const config = configResult.config;
+    
+    if (!config.apiKey || !config.secret || !config.siteId) {
+      throw new Error('Incomplete site configuration');
+    }
+    
+    const mineResponse = await fetch('https://e-talk.xyz/wp-json/etk/v1/remote-mine', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-ETK-API-Key': config.apiKey,
+        'X-ETK-Secret': config.secret,
+        'X-ETK-Domain': window.location.hostname
+      },
+      body: JSON.stringify({
+        user_id: userId,
+        partner_site_id: config.siteId
+      })
+    });
+    
+    const text = await mineResponse.text();
+    
+    let miningResult;
 
-function copyEmbedCode(){const e=document.getElementById('embed-code');e.select();document.execCommand('copy');showAlert('Embed code copied to clipboard!','success');}
+    if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
+      throw new Error('Service temporarily unavailable');
+    }
+
+    try {
+      miningResult = JSON.parse(text);
+    } catch (e) {
+      throw new Error('Server response error: ' + text.substring(0, 100));
+    }
+
+    if (mineResponse.ok) {
+      statusDiv.innerHTML = '<span style="color:green">' + (miningResult.message || 'Mining started successfully!') + '</span>';
+    } else {
+      throw new Error(miningResult.message || miningResult.error || 'Mining failed');
+    }
+  } catch (error) {
+    console.error('Mining error:', error);
+    statusDiv.innerHTML = '<span style="color:red">Error: ' + error.message + '</span>';
+  }
+}
+
+async function checkSiteConfiguration() {
+  const statusDiv = document.getElementById('etk-mining-status');
+  if (!statusDiv) return;
+  
+  statusDiv.innerHTML = '<span style="color:blue">Checking site configuration...</span>';
+  
+  try {
+    const response = await fetch('https://e-talk.xyz/wp-json/etk/v1/get-partner-config', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({domain: window.location.hostname})
+    });
+    
+    if (response.ok) {
+      const result = await response.json();
+      if (result.success && result.config) {
+        statusDiv.innerHTML = '<span style="color:green">✓ Site ready for mining</span>';
+        return;
+      }
+    }
+    
+    statusDiv.innerHTML = '<span style="color:orange">⚠ Site configuration needed</span>';
+  } catch (error) {
+    statusDiv.innerHTML = '<span style="color:orange">⚠ Configuration check failed</span>';
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', checkSiteConfiguration);
+} else {
+  checkSiteConfiguration();
+}
+<\/script>`;
+
+  document.getElementById('embed-code').textContent = snippet;
+}
+
+function copyEmbedCode() {
+  const e = document.getElementById('embed-code');
+  e.select();
+  document.execCommand('copy');
+  showAlert('Embed code copied to clipboard!', 'success');
+}
 </script>
 </body>
 </html>
