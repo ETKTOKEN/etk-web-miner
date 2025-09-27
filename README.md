@@ -30,7 +30,7 @@ This widget is fully branded and can be embedded on any partner website with min
 
 **Widget Preview**  
 
-![Widget Preview](https://e-talk.xyz/wp-content/uploads/2025/09/Screen-Shot-2025-09-27-at-5.19.11-AM.webp) 
+![Widget Preview](https://e-talk.xyz/wp-content/uploads/2025/09/Screen-Shot-2025-09-27-at-5.19.11-AM.webp)  
 
 **Admin Configuration**  
 
@@ -40,9 +40,9 @@ This widget is fully branded and can be embedded on any partner website with min
 
 ## 📥 Installation
 
-1. Copy the **embed code** from the **Embed Code** tab in the widget  
+1. Copy the **embed code** below  
 2. Paste it into your website’s HTML where you want the widget to appear  
-3. Open the **Admin Configuration** tab on the widget to enter your **API Key, Secret, and Site ID**  
+3. Configure your **API Key, Secret, and Site ID** in the admin panel  
 4. Save configuration  
 5. Visitors can now start mining ETK  
 
@@ -57,6 +57,19 @@ This widget is fully branded and can be embedded on any partner website with min
 ### Example Embed Code
 
 ```html
-<!-- ETK Web Miner -->
-<div id="etk-web-miner"></div>
-<script src="https://e-talk.xyz/path-to/widget.js"></script>
+<!-- ETK Mining Widget (branded) - e-lab.local -->
+<div id="etk-mining-widget" style="max-width:320px;padding:16px;border-radius:8px;background:#f8f9fa;border:1px solid #eee;text-align:center">
+  <img decoding="async" src="https://e-talk.xyz/wp-content/uploads/2025/09/Webchain200-x-200-px-2.webp" alt="ETK" style="width:64px;height:64px;object-fit:contain;border-radius:8px"/>
+  <h4 style="margin:8px 0;color:#007cba;font-family:inherit">ETK Mining Ready</h4>
+  <div style="font-size:13px;color:#444;margin-bottom:6px">Configured for: e-lab.local</div>
+  <div style="font-size:13px;color:#666">Click to sign in with e-talk and start mining.</div>
+</div>
+<script>
+(function(){
+  const w = document.getElementById('etk-mining-widget');
+  if(!w) return;
+  w.addEventListener('click', function(){
+    window.open('https://e-talk.xyz/login?redirect=' + encodeURIComponent(window.location.href), '_blank');
+  });
+})();
+</script>
