@@ -1,4 +1,4 @@
-# ![ETK Logo](https://e-talk.xyz/wp-content/uploads/2025/09/Webchain200-x-200-px-2.webp) ETK Web Miner
+# ![ETK Logo](https://e-talk.xyz/webchain-icon.png) ETK Web Miner
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)  
 [![Website](https://img.shields.io/badge/Website-e--talk.xyz-blue)](https://e-talk.xyz)
@@ -61,7 +61,7 @@ This widget is fully branded and can be embedded on any partner website with min
 ```html
 <!-- ETK Mining Widget (no login required) - yourdomain.com -->
 <div id="etk-mining-widget" style="max-width:320px;padding:16px;border-radius:8px;background:#f8f9fa;border:1px solid #eee;text-align:center">
-  <img decoding="async" src="https://e-talk.xyz/wp-content/uploads/2025/09/Webchain200-x-200-px-2.webp" alt="ETK" style="width:64px;height:64px;object-fit:contain;border-radius:8px"/>
+  <img decoding="async" src="https://e-talk.xyz/webchain-icon.png" alt="ETK" style="width:64px;height:64px;object-fit:contain;border-radius:8px"/>
   <h4 style="margin:8px 0;color:#007cba;font-family:inherit">ETK Mining</h4>
   <div style="font-size:13px;color:#444;margin-bottom:6px">No login required</div>
   <input type="text" id="etk-user-id" placeholder="Enter your e-talk User ID" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;margin-bottom:10px">
